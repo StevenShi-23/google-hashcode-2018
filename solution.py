@@ -104,7 +104,20 @@ class World:
             self.next_step()
 
     def reader(inputPath):
-        with open
+        with open(filename, 'r') as f:
+            lines = [line.rstrip('\n') for line in f.readlines()]
+            
+            R, C, F, N, B, T = map(int, lines[0].split(' '))
+            vehicles = []
+            rides = []
+            for i in range(1,N+1):
+                a, b, x, y, s, f = map(int, lines[i].split(' '))
+                ride = Ride(i, (a,b), (x,y), s, f)
+                rides.append(ride)
+            for i in range(0, F):
+                vehicle = Vehicle()
+                vehicles.append(vehicle)
+            world = World(vehicles, rides, B, R, C, T)    
 
     def writer(self, outpath):
         with open (outpath, "w+") as outfile:
