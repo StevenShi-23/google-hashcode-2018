@@ -54,14 +54,14 @@ class Ride:
         self.dist = abs(start_position[0] - end_position[0]) + abs(start_position[1] - end_position[1])
 
     # lower the better
-    def cost(self, vehicle, current_time, bonus):
+    def score(self, vehicle, current_time, bonus):
         if not vehicle.available:
-            return math.inf
+            return 0
 
         if current_time + dist_manh(vehicle.position, self.start_position) > self.latest_finish_time - self.dist:
-            return math.inf
+            return 0
 
-        return dist
+        return dist_manh(vehicle.position,self.start_position)+bonus
         # todo: include B
 
 
@@ -106,7 +106,17 @@ class World:
     def reader(inputPath):
         with open
 
-    def writer(self):
+    def writer(self, outpath):
+        with open (outpath, "w+") as outfile:
+            cnt=1
+            for veh in self.vehicles:
+                post=""
+                for ride in veh.rideList:
+                    post+ride.id+" "
+                str = cnt+" "+post
+                outfile.write(str)
+                cnt+=1
+
 
 
 
