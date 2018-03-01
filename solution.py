@@ -112,8 +112,8 @@ class World:
             for veh in self.vehicles:
                 post=""
                 for ride in veh.rideList:
-                    post+ride.id+" "
-                str = cnt+" "+post+"\n"
+                    post+=" "+ride.id
+                str = cnt+post+"\n"
                 outfile.write(str)
                 cnt+=1
 
