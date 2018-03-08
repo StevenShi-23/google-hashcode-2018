@@ -109,7 +109,7 @@ class World:
                 cnt+=1
 
 if __name__ == "__main__":
-    with open("/Users/StevenShi/PycharmProjects/google-hashcode-2018/data/input/a_example.in", 'r') as f:
+    with open("./data/input/a_example.in", 'r') as f:
         lines = [line.rstrip('\n') for line in f.readlines()]
 
         R, C, F, N, B, T = map(int, lines[0].split(' '))
@@ -127,7 +127,7 @@ if __name__ == "__main__":
             vehicles.append(vehicle)
         world = World(vehicles, rides, B, R, C, T)
         world.run()
-        world.writer("/Users/StevenShi/PycharmProjects/google-hashcode-2018/data/output/a_example.out")
+        world.writer("./data/output/a_example.out")
 
 
 
