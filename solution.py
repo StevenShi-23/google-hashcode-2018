@@ -10,17 +10,47 @@ class Vehicle:
         self.rideList = []
         self.status = status
 
-    def update(self,ride):
+    def getDispatched(self,new_ride_req):
+        self.status = 1
+        self.rideList.append(new_ride_req)
+
+    def goToPickUp(self):
         # Move along X-axis until reaches y coordinate of Destination
-        if ride.start_position[0] - self.position[0] > 0:
-            self.position[0] += 1
-        elif ride.start_position[0] - self.position[0] < 0:
-            self.position[0] -= 1
+        if self.rideList[-1].start_position[0] - self.position[0] > 0:
+            self.position += (1,0)
+        elif self.rideList[-1].start_position[0] - self.position[0] < 0:
+            self.position -= (1,0)
         # Move along Y-axis
-        elif ride.start_position[1] - self.position[1] > 0:
-            self.position[1] += 1
-        elif ride.start_position[1] - self.position[1] < 0:
-            self.position[1] -= 1
+        elif self.rideList[-1].start_position[1] - self.position[1] > 0:
+            self.position += (0,1)
+        elif self.rideList[-1].start_position[1] - self.position[1] < 0:
+            self.position -= (0,1)
+
+    def goToDropOff(self):
+        # Move along X-axis until reaches y coordinate of Destination
+        if self.rideList[-1].end_position[0] - self.position[0] > 0:
+            self.position += (1,0)
+        elif self.rideList[-1].end_position[0] - self.position[0] < 0:
+            self.position -= (1,0)
+        # Move along Y-axis
+        elif self.rideList[-1].end_position[1] - self.position[1] > 0:
+            self.position += (0,1)
+        elif self.rideList[-1].end_position[1] - self.position[1] < 0:
+            self.position -= (0,1)
+
+    def update(self,cur_time):
+        if self.status == 1:
+            if cur_time<self.rideList[-1].earliest_start_time:
+                self.goToPickUp()
+            else:
+                self.goToDropOff()
+                self.status = 2
+        elif self.status == 2:
+            if cur_time<self.rideList[-1].latest_finish_time:
+                self.goToDropOff()
+            else:
+                self.status = 0
+
 
 
 class Ride:
@@ -52,14 +82,11 @@ class Ride:
 
     # lower the better TODO make it perfect
     def score(self, vehicle, current_time, bonus):
-        if not vehicle.available:
+        if vehicle.status!=0:
             return 0
-
         if current_time + dist_manh(vehicle.position, self.start_position) > self.latest_finish_time - self.dist:
             return 0
-
         return dist_manh(vehicle.position,self.start_position)+bonus
-        # todo: include B
 
 
 class World:
@@ -72,30 +99,34 @@ class World:
         self.numCols = cols
         self.maxT = T
 
-    def next_step(self):
+    def refresh(self,cur_time):
         for vehicle in self.vehicles:
             if vehicle.status == 0:
                 continue
             else:
-                #todo: udpate vehicle status from 1 to 2 and 2 to 0
-                vehicle.update()
+                vehicle.update(cur_time)
 
     def run(self):
         for t in range(0, self.maxT):
-            cur_ride = heapq.heappop(self.rides)
-            while (cur_ride.earliest_start_time == t):
-                temp_vehicle_PQ = []
-                for vehicle in self.vehicles:
-                    if vehicle.status == 0:
-                        score = cur_ride.score(vehicle, t, self.bonus)
-                        heapq.heappush(temp_vehicle_PQ,(score,vehicle))
-                # todo sanity check: there exist such a vehicle
-                selectedVehicle = temp_vehicle_PQ[len(temp_vehicle_PQ)-1][1]
-                selectedVehicle.rideList.append(cur_ride.id)
-                selectedVehicle.status = 1
-                heapq.heappop(self.rides)
-            heapq.heappush(self.rides,(cur_ride.earliest_start_time,cur_ride))
-            self.next_step()
+            if t%100==0:
+                print("Now simulating t="+str(t)+"\n")
+            # select a ride request at current time
+            cur_ride = heapq.heappop(self.rides)[1]
+            while cur_ride.earliest_start_time == t:
+                temp_vehicle__p_q = []
+                for candidateVeh in self.vehicles:
+                    if candidateVeh.status == 0:
+                        score = cur_ride.score(candidateVeh, t, self.bonus)
+                        heapq.heappush(temp_vehicle__p_q, (score, candidateVeh))
+                # sanity check: there exist such a vehicle; if not, skip this request
+                if len(temp_vehicle__p_q)!=0:
+                    temp_vehicle__p_q[-1][1].getDispatched(cur_ride)
+                # get next requests
+                if len(self.rides):
+                    cur_ride = heapq.heappop(self.rides)[1]
+            heapq.heappush(self.rides, (cur_ride.earliest_start_time,cur_ride))
+            # Update veh position at the end of each second
+            self.refresh(t)
 
     def writer(self, outpath):
         with open (outpath, "w+") as outfile:
@@ -103,10 +134,10 @@ class World:
             for veh in self.vehicles:
                 post=""
                 for ride in veh.rideList:
-                    post+=" "+ride.id
+                    post += " "+ride.id
                 result = str(cnt+post)+"\n"
                 outfile.write(result)
-                cnt+=1
+                cnt += 1
 
 if __name__ == "__main__":
     with open("./data/input/a_example.in", 'r') as f:
@@ -128,6 +159,7 @@ if __name__ == "__main__":
         world = World(vehicles, rides, B, R, C, T)
         world.run()
         world.writer("./data/output/a_example.out")
+        print("Finished.")
 
 
 
