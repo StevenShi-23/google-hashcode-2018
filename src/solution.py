@@ -4,13 +4,15 @@ def dist_manh(start, end):
     return abs(start[0]-end[0]) + abs(start[1]-end[1])
 
 class Vehicle:
-    def __init__(self, position=(0, 0), status=0):
+    def __init__(self,id):
         # free = 0, tostart = 1, todest = 2
-        self.position = position
+        self.position = (0, 0)
         self.rideList = []
-        self.status = status
+        self.status = 0
+        self.vehId = id
 
     def getDispatched(self,new_ride_req):
+
         self.status = 1
         self.rideList.append(new_ride_req)
 
@@ -106,10 +108,15 @@ class World:
             else:
                 vehicle.update(cur_time)
 
+    def allvehStatus(self,current_time):
+        print("when t ="+str(current_time)+",")
+        for veh in self.vehicles:
+            print(str(veh.vehId)+" is at "+str(veh.position))
+        print('\n')
+
     def run(self):
         for t in range(0, self.maxT):
-            if t%100==0:
-                print("Now simulating t="+str(t)+"\n")
+            print("Now simulating t="+str(t)+"\n")
             # select a ride request at current time
             cur_ride = heapq.heappop(self.rides)[1]
             while cur_ride.earliest_start_time == t:
@@ -121,12 +128,14 @@ class World:
                 # sanity check: there exist such a vehicle; if not, skip this request
                 if len(temp_vehicle__p_q)!=0:
                     temp_vehicle__p_q[-1][1].getDispatched(cur_ride)
+                    print("Get a vehicle for ride"+str(cur_ride.id)+"\n")
                 # get next requests
                 if len(self.rides):
                     cur_ride = heapq.heappop(self.rides)[1]
             heapq.heappush(self.rides, (cur_ride.earliest_start_time,cur_ride))
             # Update veh position at the end of each second
             self.refresh(t)
+            self.allvehStatus(t)
 
     def writer(self, outpath):
         with open (outpath, "w+") as outfile:
@@ -140,7 +149,7 @@ class World:
                 cnt += 1
 
 if __name__ == "__main__":
-    with open("./data/input/a_example.in", 'r') as f:
+    with open("../data/input/a_example.in", 'r') as f:
         lines = [line.rstrip('\n') for line in f.readlines()]
 
         R, C, F, N, B, T = map(int, lines[0].split(' '))
@@ -154,11 +163,11 @@ if __name__ == "__main__":
             heapq.heappush(rides,(ride.earliest_start_time,ride))
 
         for i in range(0, F):
-            vehicle = Vehicle()
+            vehicle = Vehicle(id=i)
             vehicles.append(vehicle)
         world = World(vehicles, rides, B, R, C, T)
         world.run()
-        world.writer("./data/output/a_example.out")
+        world.writer("../data/output/a_example.out")
         print("Finished.")
 
 
