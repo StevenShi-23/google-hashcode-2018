@@ -6,6 +6,8 @@ def compute_manhattan_distance(node_start, node_end):
     return abs(x_start-x_end) + abs(y_start - y_end)
 
 
+
+
 class Vehicle:
     def __init__(self, id, position = [0,0]):
         # free = 0, tostart = 1, todest = 2
@@ -84,6 +86,8 @@ class Vehicle:
                 self.status = 0
 
 
+
+
 class Ride:
     def __init__(self,
                  id,
@@ -96,28 +100,32 @@ class Ride:
         self.end_position = end_position
         self.earliest_start_time = earliest_start_time
         self.latest_finish_time = latest_finish_time
-        self.dist = abs(start_position[0] - end_position[0]) + abs(start_position[1] - end_position[1])
+        self.dist = compute_manhattan_distance(start_position, end_position)
 
     # Override the comparator
     def __lt__(self, other):
         # we serve early request first
-        if (self.earliest_start_time < other.earliest_start_time):
+        if self.earliest_start_time < other.earliest_start_time:
             return True
-        elif (self.earliest_start_time > other.earliest_start_time):
+        elif self.earliest_start_time > other.earliest_start_time:
             return False
         # if request are at the same time, we serve the request with longer distance
-        elif (self.dist>other.dist):
+        elif self.dist>other.dist:
             return True
         else:
             return False
 
+
+
     # lower the better TODO make it perfect
     def score(self, vehicle, current_time, bonus):
-        if vehicle.status!=0:
+        if vehicle.status != 0: # vehicle is already assigned
             return 0
-        if current_time + compute_manhattan_distance(vehicle.position, self.start_position) > self.latest_finish_time - self.dist:
+        if current_time + compute_manhattan_distance(vehicle.position, self.start_position) + self.dist > self.latest_finish_time:
             return 0
-        return compute_manhattan_distance(vehicle.position,self.start_position)+bonus
+        return compute_manhattan_distance(vehicle.position,self.start_position) + bonus
+
+
 
 
 class World:
@@ -130,6 +138,8 @@ class World:
         self.numCols = cols
         self.maxT = T
 
+
+
     def refresh(self,cur_time):
         for vehicle in self.vehicles:
             if vehicle.status == 0:
@@ -137,11 +147,15 @@ class World:
             else:
                 vehicle.update(cur_time)
 
+
+
     def allvehStatus(self,current_time):
-        print("when t ="+str(current_time)+",")
+        print("time = "+str(current_time)+",")
         for veh in self.vehicles:
             print(str(veh.vehicle_id)+" is at "+str(veh.position))
         print('\n')
+
+
 
     def run(self):
         for t in range(0, self.maxT):
@@ -176,6 +190,8 @@ class World:
                 result = str(cnt+post)+"\n"
                 outfile.write(result)
                 cnt += 1
+
+
 
 if __name__ == "__main__":
     with open("../data/input/a_example.in", 'r') as f:
