@@ -43,31 +43,26 @@ class Vehicle:
 
 
 
-    def goToPickUp(self):
-        current_ride = self.rideList[-1]
-
-        if current_ride.start_position[0] > self.position[0]:
+    def goTo(self, position):
+        if position[0] > self.position[0]:
             self.go_right()
-        elif current_ride.start_position[0] < self.position[0]:
+        elif position[0] < self.position[0]:
             self.go_left()        
-        elif current_ride.start_position[1] > self.position[1]:
+        elif position[1] > self.position[1]:
             self.go_up()
-        elif current_ride.start_position[1] < self.position[1]:
-            self.go_down()
+        elif position[1] < self.position[1]:
+            self.go_down()        
+
+
+
+    def goToPickUp(self):
+        self.goTo(self.rideList[-1].start_position)
 
 
 
     def goToDropOff(self):
-        current_ride = self.rideList[-1]
-        
-        if current_ride.end_position[0] > self.position[0]:
-            self.go_right()
-        elif current_ride.end_position[0] < self.position[0]:
-            self.go_left()
-        elif current_ride.end_position[1] > self.position[1]:
-            self.go_up()
-        elif current_ride.end_position[1] < self.position[1]:
-            self.go_down()
+        self.goTo(self.rideList[-1].end_position)
+
 
 
     def update(self,cur_time):
