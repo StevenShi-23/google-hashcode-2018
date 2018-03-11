@@ -36,6 +36,11 @@ class Vehicle:
 
 
 
+    def at_destination(self):
+        return self.position == self.rideList[-1].end_position
+
+
+
     def getDispatched(self,new_ride_req):
 
         self.status = 1
@@ -67,17 +72,16 @@ class Vehicle:
 
     def update(self,cur_time):
         if self.status == 1:
-            if cur_time<self.rideList[-1].earliest_start_time:
+            if cur_time < self.rideList[-1].earliest_start_time:
                 self.goToPickUp()
             else:
                 self.goToDropOff()
                 self.status = 2
         elif self.status == 2:
-            if cur_time<self.rideList[-1].latest_finish_time:
+            if cur_time < self.rideList[-1].latest_finish_time:
                 self.goToDropOff()
-            else:
+            if self.at_destination():
                 self.status = 0
-
 
 
 class Ride:
@@ -183,7 +187,7 @@ if __name__ == "__main__":
 
         for i in range(1, N + 1):
             a, b, x, y, s, f = map(int, lines[i].split(' '))
-            ride = Ride(i, (a, b), (x, y), s, f)
+            ride = Ride(i, [a, b], [x, y], s, f)
             # sorted based on start time
             heapq.heappush(rides,(ride.earliest_start_time,ride))
 
