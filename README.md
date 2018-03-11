@@ -8,7 +8,7 @@ This year's question is about request-vehicle matching for cars. Basically, we a
 ```
 python solution.py <input-filename>.in
 ```
-The program will write the solution to __<input-filenamme>.out__.
+The program will write the solution to ```<input-filenamme>.out```.
 
 # Solution 1 (Score: 1.562.473)
 
