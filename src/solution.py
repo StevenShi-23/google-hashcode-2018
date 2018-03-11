@@ -1,44 +1,74 @@
 import heapq
 
-def dist_manh(start, end):
-    return abs(start[0]-end[0]) + abs(start[1]-end[1])
+def compute_manhattan_distance(node_start, node_end):
+    x_start, y_start = node_start[0], node_start[1]
+    x_end, y_end = node_end[0], node_end[1]
+    return abs(x_start-x_end) + abs(y_start - y_end)
+
 
 class Vehicle:
-    def __init__(self,id):
+    def __init__(self, id, position = [0,0]):
         # free = 0, tostart = 1, todest = 2
-        self.position = (0, 0)
+        self.position = position
         self.rideList = []
         self.status = 0
-        self.vehId = id
+        self.vehicle_id = id
+
+
+
+    def go_left(self):
+        self.position[0] -= 1
+
+
+
+    def go_right(self):
+        self.position[0] += 1
+
+
+
+    def go_up(self):
+        self.position[1] += 1
+
+
+
+    def go_down(self):
+        self.position[1] -= 1
+
+
 
     def getDispatched(self,new_ride_req):
 
         self.status = 1
         self.rideList.append(new_ride_req)
 
+
+
     def goToPickUp(self):
-        # Move along X-axis until reaches y coordinate of Destination
-        if self.rideList[-1].start_position[0] - self.position[0] > 0:
-            self.position += (1,0)
-        elif self.rideList[-1].start_position[0] - self.position[0] < 0:
-            self.position -= (1,0)
-        # Move along Y-axis
-        elif self.rideList[-1].start_position[1] - self.position[1] > 0:
-            self.position += (0,1)
-        elif self.rideList[-1].start_position[1] - self.position[1] < 0:
-            self.position -= (0,1)
+        current_ride = self.rideList[-1]
+
+        if current_ride.start_position[0] > self.position[0]:
+            self.go_right()
+        elif current_ride.start_position[0] < self.position[0]:
+            self.go_left()        
+        elif current_ride.start_position[1] > self.position[1]:
+            self.go_up()
+        elif current_ride.start_position[1] < self.position[1]:
+            self.go_down()
+
+
 
     def goToDropOff(self):
-        # Move along X-axis until reaches y coordinate of Destination
-        if self.rideList[-1].end_position[0] - self.position[0] > 0:
-            self.position += (1,0)
-        elif self.rideList[-1].end_position[0] - self.position[0] < 0:
-            self.position -= (1,0)
-        # Move along Y-axis
-        elif self.rideList[-1].end_position[1] - self.position[1] > 0:
-            self.position += (0,1)
-        elif self.rideList[-1].end_position[1] - self.position[1] < 0:
-            self.position -= (0,1)
+        current_ride = self.rideList[-1]
+        
+        if current_ride.end_position[0] > self.position[0]:
+            self.go_right()
+        elif current_ride.end_position[0] < self.position[0]:
+            self.go_left()
+        elif current_ride.end_position[1] > self.position[1]:
+            self.go_up()
+        elif current_ride.end_position[1] < self.position[1]:
+            self.go_down()
+
 
     def update(self,cur_time):
         if self.status == 1:
@@ -86,9 +116,9 @@ class Ride:
     def score(self, vehicle, current_time, bonus):
         if vehicle.status!=0:
             return 0
-        if current_time + dist_manh(vehicle.position, self.start_position) > self.latest_finish_time - self.dist:
+        if current_time + compute_manhattan_distance(vehicle.position, self.start_position) > self.latest_finish_time - self.dist:
             return 0
-        return dist_manh(vehicle.position,self.start_position)+bonus
+        return compute_manhattan_distance(vehicle.position,self.start_position)+bonus
 
 
 class World:
@@ -111,7 +141,7 @@ class World:
     def allvehStatus(self,current_time):
         print("when t ="+str(current_time)+",")
         for veh in self.vehicles:
-            print(str(veh.vehId)+" is at "+str(veh.position))
+            print(str(veh.vehicle_id)+" is at "+str(veh.position))
         print('\n')
 
     def run(self):
@@ -163,7 +193,7 @@ if __name__ == "__main__":
             heapq.heappush(rides,(ride.earliest_start_time,ride))
 
         for i in range(0, F):
-            vehicle = Vehicle(id=i)
+            vehicle = Vehicle(id = i)
             vehicles.append(vehicle)
         world = World(vehicles, rides, B, R, C, T)
         world.run()
