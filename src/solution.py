@@ -101,7 +101,19 @@ class Ride:
         self.end_position = end_position
         self.earliest_start_time = earliest_start_time
         self.latest_finish_time = latest_finish_time
-        self.dist = compute_manhattan_distance(start_position, end_position)
+        self.dist = -compute_manhattan_distance(start_position, end_position)
+
+    def get_dist(self):
+        return -self.dist
+
+    def __str__(self):
+        return "Ride:\n\tid: {0}\n\tstart_position: {1}\n\tend_position: {2}\n\tearliest_start_time: {3}\n\tlatest_finish_time: {4}\n\tdist: {5}\n".format(
+            self.id, 
+            self.start_position, 
+            self.end_position, 
+            self.earliest_start_time, 
+            self.latest_finish_time, 
+            self.get_dist())
 
     # Override the comparator
     def __lt__(self, other):
@@ -111,7 +123,7 @@ class Ride:
         elif self.earliest_start_time > other.earliest_start_time:
             return False
         # if request are at the same time, we serve the request with longer distance
-        elif self.dist>other.dist:
+        elif self.dist<other.dist:
             return True
         else:
             return False
@@ -121,10 +133,10 @@ class Ride:
     # lower the better TODO make it perfect
     def score(self, vehicle, current_time, bonus):
         if vehicle.status != 0: # vehicle is already assigned
-            return 0
-        if current_time + compute_manhattan_distance(vehicle.position, self.start_position) + self.dist > self.latest_finish_time:
-            return 0
-        return compute_manhattan_distance(vehicle.position,self.start_position) + bonus
+            return 0 #2**30
+        if current_time + compute_manhattan_distance(vehicle.position, self.start_position) + self.get_dist() > self.latest_finish_time:
+            return 0 #2**30
+        return +(compute_manhattan_distance(vehicle.position,self.start_position) + bonus)
 
 
 
@@ -163,7 +175,7 @@ class World:
         while t < self.maxT:
 
             # if we dont have any rides, we stop
-            if len(self.rides):
+            if len(self.rides) == 0:
                 break
             
             while True:
@@ -172,6 +184,7 @@ class World:
                 el = heapq.heappop(self.rides)
                 current_ride_start_time = el[0]
                 current_ride = el[1]
+                print(current_ride)
             
                 # we find the best candidate vehicle to process the current ride
                 candidate_vehicles = []
@@ -224,9 +237,9 @@ if __name__ == "__main__":
         vehicles = []
         rides = []
 
-        for i in range(0, N):
+        for i in range(1, N+1):
             a, b, x, y, s, f = map(int, lines[i].split(' '))
-            ride = Ride(i, [a, b], [x, y], s, f)
+            ride = Ride(i-1, [a, b], [x, y], s, f)
             # sorted based on start time
             heapq.heappush(rides,(ride.earliest_start_time,ride))
 
