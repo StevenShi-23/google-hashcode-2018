@@ -1,4 +1,5 @@
 import heapq
+import sys
 
 def compute_manhattan_distance(node_start, node_end):
     x_start, y_start = node_start[0], node_start[1]
@@ -73,19 +74,19 @@ class Vehicle:
 
 
     def update(self,cur_time):
+        current_ride = self.rideList[-1]
         if self.status == 1:
-            if cur_time < self.rideList[-1].earliest_start_time:
+            if self.position != current_ride.start_position:
                 self.goToPickUp()
-            else:
+            elif cur_time >= current_ride.earliest_start_time:
                 self.goToDropOff()
                 self.status = 2
         elif self.status == 2:
-            if cur_time < self.rideList[-1].latest_finish_time:
+            if self.position != current_ride.end_position:
                 self.goToDropOff()
-            if self.at_destination():
+            else:
                 self.status = 0
-
-
+    
 
 
 class Ride:
@@ -140,7 +141,7 @@ class World:
 
 
 
-    def refresh(self,cur_time):
+    def update(self,cur_time):
         for vehicle in self.vehicles:
             if vehicle.status == 0:
                 continue
@@ -158,50 +159,72 @@ class World:
 
 
     def run(self):
-        for t in range(0, self.maxT):
-            print("Now simulating t="+str(t)+"\n")
-            # select a ride request at current time
-            cur_ride = heapq.heappop(self.rides)[1]
-            while cur_ride.earliest_start_time == t:
-                temp_vehicle__p_q = []
-                for candidateVeh in self.vehicles:
-                    if candidateVeh.status == 0:
-                        score = cur_ride.score(candidateVeh, t, self.bonus)
-                        heapq.heappush(temp_vehicle__p_q, (score, candidateVeh))
-                # sanity check: there exist such a vehicle; if not, skip this request
-                if len(temp_vehicle__p_q)!=0:
-                    temp_vehicle__p_q[-1][1].getDispatched(cur_ride)
-                    print("Get a vehicle for ride"+str(cur_ride.id)+"\n")
-                # get next requests
-                if len(self.rides):
-                    cur_ride = heapq.heappop(self.rides)[1]
-            heapq.heappush(self.rides, (cur_ride.earliest_start_time,cur_ride))
-            # Update veh position at the end of each second
-            self.refresh(t)
-            self.allvehStatus(t)
+        t = 0
+        while t < self.maxT:
+
+            # if we dont have any rides, we stop
+            if len(self.rides):
+                break
+            
+            while True:
+
+                # we get the next best ride to process
+                el = heapq.heappop(self.rides)
+                current_ride_start_time = el[0]
+                current_ride = el[1]
+            
+                # we find the best candidate vehicle to process the current ride
+                candidate_vehicles = []
+                for candidate_vehicle in self.vehicles:
+                    if candidate_vehicle.status == 0:
+                        score = current_ride.score(candidate_vehicle, t, self.bonus)
+                        heapq.heappush(candidate_vehicles, (score, candidate_vehicle))
+
+                # if we found a candidate vehicle, we dispatch it to the current ride
+                if len(candidate_vehicles) != 0:
+                    tmp_el = heapq.heappop(candidate_vehicles)
+                    best_vehicle = tmp_el[1]
+                    best_vehicle.getDispatched(current_ride)
+
+
+                if len(self.rides) == 0:
+                    break
+                else:
+                    peek_el = heapq.heappop(self.rides)
+                    peek_ride_start_time = peek_el[0]
+                    heapq.heappush(self.rides, peek_el)  
+                    if peek_ride_start_time != t:
+                        break
+
+            # we update the world
+            t += 1
+            self.update (t)
+
+
+
 
     def writer(self, outpath):
         with open (outpath, "w+") as outfile:
-            cnt=1
-            for veh in self.vehicles:
-                post=""
-                for ride in veh.rideList:
-                    post += " "+ride.id
-                result = str(cnt+post)+"\n"
-                outfile.write(result)
-                cnt += 1
-
+            for vehicle in self.vehicles:
+                post = str(len(vehicle.rideList))
+                for ride in vehicle.rideList:
+                    post += " "+str(ride.id)
+                outfile.write(post+"\n")
 
 
 if __name__ == "__main__":
-    with open("../data/input/a_example.in", 'r') as f:
+    if len(sys.argv) < 2:
+        sys.exit(0)
+    input_filename = sys.argv[1]
+    output_filename = input_filename[:-2] + "out"
+    with open(input_filename, 'r') as f:
         lines = [line.rstrip('\n') for line in f.readlines()]
 
         R, C, F, N, B, T = map(int, lines[0].split(' '))
         vehicles = []
         rides = []
 
-        for i in range(1, N + 1):
+        for i in range(0, N):
             a, b, x, y, s, f = map(int, lines[i].split(' '))
             ride = Ride(i, [a, b], [x, y], s, f)
             # sorted based on start time
@@ -212,9 +235,8 @@ if __name__ == "__main__":
             vehicles.append(vehicle)
         world = World(vehicles, rides, B, R, C, T)
         world.run()
-        world.writer("../data/output/a_example.out")
+        world.writer(output_filename)
         print("Finished.")
-
 
 
 
